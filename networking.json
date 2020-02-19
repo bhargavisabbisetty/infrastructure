@@ -1,0 +1,63 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Launch EC2 - CSYE 6225 Spring 2020",
+    "Parameters": {
+      "InstanceTypeParameter": {
+        "Type": "String",
+        "Default": "t2.micro",
+        "AllowedValues": ["t2.micro", "m1.small", "m1.large"],
+        "Description": "Enter t2.micro, m1.small, or m1.large. Default is t2.micro."
+      }
+    },
+    "Resources": {
+      "EC2Instance": {
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+          "ImageId": "ami-0bfb2d3c3d4a4d7f8",
+          "InstanceType": {
+            "Ref": "InstanceTypeParameter"
+          },
+          "SecurityGroupIds": [
+            "sg-0616c8798ebac2b5c"
+          ],
+          "KeyName": "csye6225_dev",
+          "SubnetId": "subnet-21bf0b6c"
+        }
+      }
+    },
+    "Outputs": {
+      "InstanceId": {
+        "Description": "InstanceId of the newly created EC2 instance",
+        "Value": {
+          "Ref": "EC2Instance"
+        }
+      },
+      "AZ": {
+        "Description": "Availability Zone of the newly created EC2 instance",
+        "Value": {
+          "Fn::GetAtt": [
+            "EC2Instance",
+            "AvailabilityZone"
+          ]
+        }
+      },
+      "PublicDNS": {
+        "Description": "Public DNSName of the newly created EC2 instance",
+        "Value": {
+          "Fn::GetAtt": [
+            "EC2Instance",
+            "PublicDnsName"
+          ]
+        }
+      },
+      "PublicIP": {
+        "Description": "Public IP address of the newly created EC2 instance",
+        "Value": {
+          "Fn::GetAtt": [
+            "EC2Instance",
+            "PublicIp"
+          ]
+        }
+      }
+    }
+  }
