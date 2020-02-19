@@ -1,6 +1,6 @@
 # Infrastructure as Code
 
-## 1. Infrastructure as Code with AWS Command Line Interface¶
+## Infrastructure as Code with AWS Command Line Interface¶
 
 ### Run following commands:
 
@@ -40,6 +40,8 @@
 
 - Run the `aws cloudformation validate-template --template-body file://filename --profile 'PROFILE'` to validate cloud formation template
 
+* Example to validate cloudformation template
+
 ```sh
 aws cloudformation validate-template --template-body file://networking.json --profile dev
 ```
@@ -72,3 +74,4 @@ sh delete-stack.sh csye6225demo dev us-east-2
 
 ```sh
 aws cloudformation delete-stack --stack-name csye6225demo --profile dev --region us-east-2
+```
