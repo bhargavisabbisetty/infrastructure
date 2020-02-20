@@ -1,6 +1,6 @@
 # CSYE 6225 - Spring 2020
 
-# ## Infrastructure as Code with AWS Command Line Interface
+## Infrastructure as Code with AWS Command Line Interface
 
 ## Team
 
