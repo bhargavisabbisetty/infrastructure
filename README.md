@@ -1,6 +1,17 @@
-# Infrastructure as Code
+# CSYE 6225 - Spring 2020
 
-## Infrastructure as Code with AWS Command Line Interface¶
+# ## Infrastructure as Code with AWS Command Line Interface
+
+## Team
+
+### Name: Vishnu Bhargavi Sabbisetty
+### NUID: 001497937
+### Github ID: bhargavisabbisetty
+### Email id: sabbisetty.v@husky.neu.edu
+
+## Technology Stack
+
+* Shell Script
 
 ### Run following commands:
 
