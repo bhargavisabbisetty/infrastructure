@@ -1,0 +1,304 @@
+{
+  "Description": "AWS CloudFormation Template for customized VPC with 3 subnets in 3 different zones of a specific region, 1 route table, 1 route and an internet gateway",
+
+  "Parameters": {
+    "VPCName": {
+      "Type": "String"
+    },
+    "VPCCIDR": {
+      "Type": "String",
+      "Description": "IP Address range for the VPN connected VPC"
+    },
+    "SubnetCIDR1": {
+      "Type": "String",
+      "Description": "IP Address range for the subnet1"
+    },
+    "SubnetCIDR2": {
+      "Type": "String",
+      "Description": "IP Address range for the subnet2"
+    },
+    "SubnetCIDR3": {
+      "Type": "String",
+      "Description": "IP Address range for the subnet3"
+    },
+    "SubnetName1": {
+      "Type": "String",
+      "Description": "Name of the subnet1 for tagging"
+    },
+    "SubnetName2": {
+      "Type": "String",
+      "Description": "Name of the subnet2 for tagging"
+    },
+    "SubnetName3": {
+      "Type": "String",
+      "Description": "Name of the subnet3 for tagging"
+    },
+    "InternetGatewayName": {
+      "Type": "String",
+      "Description": "Name of the internet gateway for tagging"
+    },
+    "RouteTableName": {
+      "Type": "String",
+      "Description": "Name of the route table for tagging"
+    },
+    "Region": {
+      "Type": "String",
+      "Description": "Region where vpc and subnets should be created"
+    }
+  },
+
+  "Resources": {
+    "ApplicationSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security Group for the Web Server",
+        "GroupName": "application",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [{
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 80
+          },
+          {
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 22
+          },
+          {
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 443
+          },
+          {
+            "FromPort": 3000,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 3000
+          }
+        ]
+      }
+    },
+      "RDSEC2SecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "Security Group for the database",
+          "GroupName": "database",
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "RDSSecurityGroupIngress": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+          "GroupId": {
+            "Ref": "RDSEC2SecurityGroup"
+          },
+          "IpProtocol": "tcp",
+          "FromPort": "3306",
+          "ToPort": "3306",
+          "SourceSecurityGroupId": {
+            "Ref": "ApplicationSecurityGroup"
+          }
+        }
+      },
+      "VPC": {
+        "Type": "AWS::EC2::VPC",
+        "Properties": {
+          "CidrBlock": {
+            "Ref": "VPCCIDR"
+          },
+          "EnableDnsHostnames": true,
+          "EnableDnsSupport": true,
+          "InstanceTenancy": "default",
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+              "Ref": "VPCName"
+            }
+          }]
+        }
+      },
+      "InternetGateway": {
+        "Type": "AWS::EC2::InternetGateway",
+        "Properties": {
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+              "Ref": "InternetGatewayName"
+            }
+          }]
+        }
+      },
+      "InternetGatewayAttachment": {
+        "Type": "AWS::EC2::VPCGatewayAttachment",
+        "Properties": {
+          "InternetGatewayId": {
+            "Ref": "InternetGateway"
+          },
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "Subnet01": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "AvailabilityZone": {
+            "Fn::Select": [
+              "0",
+              {
+                "Fn::GetAZs": {
+                  "Ref": "Region"
+                }
+              }
+            ]
+          },
+          "CidrBlock": {
+            "Ref": "SubnetCIDR1"
+          },
+          "MapPublicIpOnLaunch": true,
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+              "Ref": "SubnetName1"
+            }
+          }],
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "Subnet02": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "AvailabilityZone": {
+            "Fn::Select": [
+              "1",
+              {
+                "Fn::GetAZs": {
+                  "Ref": "Region"
+                }
+              }
+            ]
+          },
+          "CidrBlock": {
+            "Ref": "SubnetCIDR2"
+          },
+          "MapPublicIpOnLaunch": true,
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+              "Ref": "SubnetName2"
+            }
+          }],
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "Subnet03": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "AvailabilityZone": {
+            "Fn::Select": [
+              "2",
+              {
+                "Fn::GetAZs": {
+                  "Ref": "Region"
+                }
+              }
+            ]
+          },
+          "CidrBlock": {
+            "Ref": "SubnetCIDR3"
+          },
+          "MapPublicIpOnLaunch": true,
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+              "Ref": "SubnetName3"
+            }
+          }],
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "RouteTable": {
+        "Type": "AWS::EC2::RouteTable",
+        "Properties": {
+          "Tags": [{
+            "Key": "Name",
+            "Value": {
+              "Ref": "RouteTableName"
+            }
+          }],
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "RouteTableAssociation01": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "RouteTableId": {
+            "Ref": "RouteTable"
+          },
+          "SubnetId": {
+            "Ref": "Subnet01"
+          }
+        }
+      },
+      "RouteTableAssociation02": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "RouteTableId": {
+            "Ref": "RouteTable"
+          },
+          "SubnetId": {
+            "Ref": "Subnet02"
+          }
+        }
+      },
+      "RouteTableAssociation03": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "RouteTableId": {
+            "Ref": "RouteTable"
+          },
+          "SubnetId": {
+            "Ref": "Subnet03"
+          }
+        }
+      },
+      "Route": {
+        "Type": "AWS::EC2::Route",
+        "Properties": {
+          "DestinationCidrBlock": "0.0.0.0/0",
+          "GatewayId": {
+            "Ref": "InternetGateway"
+          },
+          "RouteTableId": {
+            "Ref": "RouteTable"
+          }
+        }
+      }
+    },
+
+    "Outputs": {
+      "CIDRBlock": {
+        "Description": "VPC id",
+        "Value": {
+          "Fn::GetAtt": ["VPC", "CidrBlock"]
+        }
+      }
+    },
+
+    "AWSTemplateFormatVersion": "2010-09-09"
+  }
