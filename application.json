@@ -78,9 +78,25 @@
       "Type": "String",
       "Description": "Database Name"
     },
-    "FolderPath":{
+    "KeyName": {
       "Type": "String",
-      "Description": "Folder path where images get uploaded"
+      "Description": "Key value pair of AWS"
+    },
+    "DeviceName": {
+      "Type": "String",
+      "Description": "Name of the Device used for EC2 Instance"
+    },
+    "LifeCycleTransitionDays": {
+      "Type": "String",
+      "Description": "S3 Life Cycle Transition Days count"
+    },
+    "StorageCategory": {
+      "Type": "String",
+      "Description": "S3 Life Cycle Storage Category"
+    },
+    "DeletionOnTerminationParam": {
+      "Type": "String",
+      "Description": "Deletion On Termination Condition"
     }
   },
 
@@ -171,23 +187,28 @@
             "Id": "StandardIARule",
             "Status": "Enabled",
             "Transitions": [{
-              "TransitionInDays": "30",
-              "StorageClass": "STANDARD_IA"
+              "TransitionInDays": {
+                "Ref": "LifeCycleTransitionDays"
+              },
+              "StorageClass": {
+                "Ref": "StorageCategory"
+              }
             }]
           }]
         },
         "Tags": [{
-          "Key": "Name",
-          "Value": {
-            "Fn::Join": ["", [{
-              "Ref": "StackName"
-            }, "-", "S3Bucket"]]
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": ["", [{
+                "Ref": "StackName"
+              }, "-", "S3Bucket"]]
+            }
+          },
+          {
+            "Key": "Type",
+            "Value": "S3Bucket"
           }
-        },
-        {
-          "Key": "Type",
-          "Value": "S3Bucket"
-        }]
+        ]
       }
     },
     "RDS": {
@@ -237,349 +258,373 @@
           {
             "Key": "Type",
             "Value": "RDSDBInstance"
-          }]
+          }
+        ]
       }
     },
-      "RDSSubnetGroup": {
-        "Type": "AWS::RDS::DBSubnetGroup",
-        "Properties": {
-          "DBSubnetGroupDescription": "RDS Subnet Group",
-          "DBSubnetGroupName": {
-            "Fn::Join": ["", ["SubnetGroupRDS", "_", {
-              "Ref": "StackName"
-            }]]
-          },
-          "SubnetIds": [{
-              "Ref": "Subnet02"
-            },
-            {
-              "Ref": "Subnet03"
-            }
-          ]
-        }
-      },
-      "EC2Instance": {
-        "Type": "AWS::EC2::Instance",
-        "DependsOn": "RDS",
-        "Properties": {
-          "ImageId": {
-            "Ref": "AMIid"
-          },
-          "SubnetId": {
-            "Ref": "Subnet01"
-          },
-          "InstanceType": {
-            "Ref": "EC2Type"
-          },
-          "BlockDeviceMappings": [{
-            "DeviceName": "/dev/sda1",
-            "Ebs": {
-              "VolumeType": {
-                "Ref": "EC2VolumeType"
-              },
-              "DeleteOnTermination": "true",
-              "VolumeSize": {
-                "Ref": "EC2Volume"
-              }
-            }
-          }],
-          "KeyName": "csye6225_dev",
-          "IamInstanceProfile": {
-            "Ref": "RootInstanceProfile"
-          },
-          "SecurityGroupIds": [{
-            "Ref": "ApplicationSecurityGroup"
-          }],
-          "UserData": {
-            "Fn::Base64": {
-              "Fn::Join": ["", [
-                "#!/bin/sh\n",
-                "cd /etc/profile.d\n",
-                "sudo touch custom.sh\n",
-                "sudo echo export MYSQL_HOST=", {
-                  "Fn::GetAtt": ["RDS", "Endpoint.Address"]
-                }, " >> custom.sh\n",
-                "sudo echo export MYSQL_USER=",{"Ref": "MasterUserName"}, " >> custom.sh\n",
-                "sudo echo export MYSQL_PASSWORD=",{"Ref": "MasterUserPassword"}, " >> custom.sh\n",
-                "sudo echo export S3_BUCKET_ADDR=", {
-                  "Ref": "S3Bucket"
-                }, " >> custom.sh\n",
-                "sudo echo export FOLDER=",{"Ref":"FolderPath"}, " >> custom.sh\n",
-                "sudo echo export MYSQL_DATABASE=",{"Ref":"DatabaseName"}, " >> custom.sh\n"
-              ]]
-            }
-          }
-        }
-      },
-      "ApplicationSecurityGroup": {
-        "Type": "AWS::EC2::SecurityGroup",
-        "Properties": {
-          "GroupDescription": "Security Group for the Web Server",
-          "GroupName": "application",
-          "VpcId": {
-            "Ref": "VPC"
-          },
-          "SecurityGroupIngress": [{
-              "FromPort": 80,
-              "IpProtocol": "tcp",
-              "CidrIp": "0.0.0.0/0",
-              "ToPort": 80
-            },
-            {
-              "FromPort": 22,
-              "IpProtocol": "tcp",
-              "CidrIp": "0.0.0.0/0",
-              "ToPort": 22
-            },
-            {
-              "FromPort": 443,
-              "IpProtocol": "tcp",
-              "CidrIp": "0.0.0.0/0",
-              "ToPort": 443
-            },
-            {
-              "FromPort": 3000,
-              "IpProtocol": "tcp",
-              "CidrIp": "0.0.0.0/0",
-              "ToPort": 3000
-            }
-          ]
-        }
-      },
-      "RDSEC2SecurityGroup": {
-        "Type": "AWS::EC2::SecurityGroup",
-        "Properties": {
-          "GroupDescription": "Security Group for the database",
-          "GroupName": "database",
-          "VpcId": {
-            "Ref": "VPC"
-          }
-        }
-      },
-      "RDSSecurityGroupIngress": {
-        "Type": "AWS::EC2::SecurityGroupIngress",
-        "Properties": {
-          "GroupId": {
-            "Ref": "RDSEC2SecurityGroup"
-          },
-          "IpProtocol": "tcp",
-          "FromPort": "3306",
-          "ToPort": "3306",
-          "SourceSecurityGroupId": {
-            "Ref": "ApplicationSecurityGroup"
-          }
-        }
-      },
-      "VPC": {
-        "Type": "AWS::EC2::VPC",
-        "Properties": {
-          "CidrBlock": {
-            "Ref": "VPCCIDR"
-          },
-          "EnableDnsHostnames": true,
-          "EnableDnsSupport": true,
-          "InstanceTenancy": "default",
-          "Tags": [{
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["", [{
-                "Ref": "StackName"
-              }, "-", "vpc"]]
-            }
-          }]
-        }
-      },
-      "InternetGateway": {
-        "Type": "AWS::EC2::InternetGateway",
-        "Properties": {
-          "Tags": [{
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["", [{
-                "Ref": "StackName"
-              }, "-", "internetgateway"]]
-            }
-          }]
-        }
-      },
-      "InternetGatewayAttachment": {
-        "Type": "AWS::EC2::VPCGatewayAttachment",
-        "Properties": {
-          "InternetGatewayId": {
-            "Ref": "InternetGateway"
-          },
-          "VpcId": {
-            "Ref": "VPC"
-          }
-        }
-      },
-      "Subnet01": {
-        "Type": "AWS::EC2::Subnet",
-        "Properties": {
-          "AvailabilityZone": {
-            "Fn::Select": [
-              "0",
-              {
-                "Fn::GetAZs": {
-                  "Ref": "Region"
-                }
-              }
-            ]
-          },
-          "CidrBlock": {
-            "Ref": "SubnetCIDR1"
-          },
-          "MapPublicIpOnLaunch": true,
-          "Tags": [{
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["", [{
-                "Ref": "StackName"
-              }, "-", "subnet01"]]
-            }
-          }],
-          "VpcId": {
-            "Ref": "VPC"
-          }
-        }
-      },
-      "Subnet02": {
-        "Type": "AWS::EC2::Subnet",
-        "Properties": {
-          "AvailabilityZone": {
-            "Fn::Select": [
-              "1",
-              {
-                "Fn::GetAZs": {
-                  "Ref": "Region"
-                }
-              }
-            ]
-          },
-          "CidrBlock": {
-            "Ref": "SubnetCIDR2"
-          },
-          "MapPublicIpOnLaunch": true,
-          "Tags": [{
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["", [{
-                "Ref": "StackName"
-              }, "-", "subnet02"]]
-            }
-          }],
-          "VpcId": {
-            "Ref": "VPC"
-          }
-        }
-      },
-      "Subnet03": {
-        "Type": "AWS::EC2::Subnet",
-        "Properties": {
-          "AvailabilityZone": {
-            "Fn::Select": [
-              "2",
-              {
-                "Fn::GetAZs": {
-                  "Ref": "Region"
-                }
-              }
-            ]
-          },
-          "CidrBlock": {
-            "Ref": "SubnetCIDR3"
-          },
-          "MapPublicIpOnLaunch": true,
-          "Tags": [{
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["", [{
-                "Ref": "StackName"
-              }, "-", "subnet03"]]
-            }
-          }],
-          "VpcId": {
-            "Ref": "VPC"
-          }
-        }
-      },
-      "RouteTable": {
-        "Type": "AWS::EC2::RouteTable",
-        "Properties": {
-          "Tags": [{
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["", [{
-                "Ref": "StackName"
-              }, "-", "routetable"]]
-            }
-          }],
-          "VpcId": {
-            "Ref": "VPC"
-          }
-        }
-      },
-      "RouteTableAssociation01": {
-        "Type": "AWS::EC2::SubnetRouteTableAssociation",
-        "Properties": {
-          "RouteTableId": {
-            "Ref": "RouteTable"
-          },
-          "SubnetId": {
-            "Ref": "Subnet01"
-          }
-        }
-      },
-      "RouteTableAssociation02": {
-        "Type": "AWS::EC2::SubnetRouteTableAssociation",
-        "Properties": {
-          "RouteTableId": {
-            "Ref": "RouteTable"
-          },
-          "SubnetId": {
+    "RDSSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "RDS Subnet Group",
+        "DBSubnetGroupName": {
+          "Fn::Join": ["", ["SubnetGroupRDS", "_", {
+            "Ref": "StackName"
+          }]]
+        },
+        "SubnetIds": [{
             "Ref": "Subnet02"
-          }
-        }
-      },
-      "RouteTableAssociation03": {
-        "Type": "AWS::EC2::SubnetRouteTableAssociation",
-        "Properties": {
-          "RouteTableId": {
-            "Ref": "RouteTable"
           },
-          "SubnetId": {
+          {
             "Ref": "Subnet03"
           }
-        }
-      },
-      "Route": {
-        "Type": "AWS::EC2::Route",
-        "Properties": {
-          "DestinationCidrBlock": "0.0.0.0/0",
-          "GatewayId": {
-            "Ref": "InternetGateway"
+        ]
+      }
+    },
+    "EC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": "RDS",
+      "Properties": {
+        "ImageId": {
+          "Ref": "AMIid"
+        },
+        "SubnetId": {
+          "Ref": "Subnet01"
+        },
+        "InstanceType": {
+          "Ref": "EC2Type"
+        },
+        "BlockDeviceMappings": [{
+          "DeviceName": {
+            "Ref": "DeviceName"
           },
-          "RouteTableId": {
-            "Ref": "RouteTable"
+          "Ebs": {
+            "VolumeType": {
+              "Ref": "EC2VolumeType"
+            },
+            "DeleteOnTermination": {
+              "Ref": "DeletionOnTerminationParam"
+            },
+            "VolumeSize": {
+              "Ref": "EC2Volume"
+            }
           }
+        }],
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "IamInstanceProfile": {
+          "Ref": "RootInstanceProfile"
+        },
+        "SecurityGroupIds": [{
+          "Ref": "ApplicationSecurityGroup"
+        }],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": ["", [
+              "#!/bin/sh\n",
+              "cd /etc/profile.d\n",
+              "sudo touch custom.sh\n",
+              "sudo echo export MYSQL_HOST=", {
+                "Fn::GetAtt": ["RDS", "Endpoint.Address"]
+              }, " >> custom.sh\n",
+              "sudo echo export MYSQL_USER=", {
+                "Ref": "MasterUserName"
+              }, " >> custom.sh\n",
+              "sudo echo export MYSQL_PASSWORD=", {
+                "Ref": "MasterUserPassword"
+              }, " >> custom.sh\n",
+              "sudo echo export S3_BUCKET_ADDR=", {
+                "Ref": "S3Bucket"
+              }, " >> custom.sh\n",
+              "sudo echo export MYSQL_DATABASE=", {
+                "Ref": "DatabaseName"
+              }, " >> custom.sh\n"
+            ]]
+          }
+        },
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "EC2"]]
+          }
+        }]
+      }
+    },
+    "ApplicationSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security Group for the Web Server",
+        "GroupName": "application",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [{
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 80
+          },
+          {
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 22
+          },
+          {
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 443
+          },
+          {
+            "FromPort": 3000,
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "ToPort": 3000
+          }
+        ]
+      }
+    },
+    "RDSEC2SecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security Group for the database",
+        "GroupName": "database",
+        "VpcId": {
+          "Ref": "VPC"
         }
       }
     },
-
-    "Outputs": {
-      "RDSDetails": {
-        "Description": "RDS Hostname",
-        "Value": {
-          "Fn::GetAtt": ["RDS", "Endpoint.Address"]
+    "RDSSecurityGroupIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "RDSEC2SecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "3306",
+        "ToPort": "3306",
+        "SourceSecurityGroupId": {
+          "Ref": "ApplicationSecurityGroup"
         }
-      },
-      "S3BucketDetails":{
-        "Value" : { "Fn::Join" : [
-          "", [ "https://", { "Fn::GetAtt" : [ "S3Bucket", "DomainName" ] } ]
-       ] },
-       "Description" : "Name of S3 bucket to hold website content"
-    }
+      }
     },
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VPCCIDR"
+        },
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "vpc"]]
+          }
+        }]
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "internetgateway"]]
+          }
+        }]
+      }
+    },
+    "InternetGatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        },
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      }
+    },
+    "Subnet01": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "0",
+            {
+              "Fn::GetAZs": {
+                "Ref": "Region"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "SubnetCIDR1"
+        },
+        "MapPublicIpOnLaunch": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "subnet01"]]
+          }
+        }],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      }
+    },
+    "Subnet02": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "1",
+            {
+              "Fn::GetAZs": {
+                "Ref": "Region"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "SubnetCIDR2"
+        },
+        "MapPublicIpOnLaunch": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "subnet02"]]
+          }
+        }],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      }
+    },
+    "Subnet03": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "2",
+            {
+              "Fn::GetAZs": {
+                "Ref": "Region"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "SubnetCIDR3"
+        },
+        "MapPublicIpOnLaunch": true,
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "subnet03"]]
+          }
+        }],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      }
+    },
+    "RouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [{
+          "Key": "Name",
+          "Value": {
+            "Fn::Join": ["", [{
+              "Ref": "StackName"
+            }, "-", "routetable"]]
+          }
+        }],
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      }
+    },
+    "RouteTableAssociation01": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "Subnet01"
+        }
+      }
+    },
+    "RouteTableAssociation02": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "Subnet02"
+        }
+      }
+    },
+    "RouteTableAssociation03": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "Subnet03"
+        }
+      }
+    },
+    "Route": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        },
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        }
+      }
+    }
+  },
 
-    "AWSTemplateFormatVersion": "2010-09-09"
-  }
+  "Outputs": {
+    "RDSDetails": {
+      "Description": "RDS Hostname",
+      "Value": {
+        "Fn::GetAtt": ["RDS", "Endpoint.Address"]
+      }
+    },
+    "S3BucketDetails": {
+      "Value": {
+        "Fn::Join": [
+          "", ["https://", {
+            "Fn::GetAtt": ["S3Bucket", "DomainName"]
+          }]
+        ]
+      },
+      "Description": "Name of S3 bucket to hold website content"
+    }
+  },
+
+  "AWSTemplateFormatVersion": "2010-09-09"
+}
