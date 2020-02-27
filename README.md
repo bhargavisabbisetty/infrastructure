@@ -72,6 +72,12 @@ sh create-stack.sh test10 10.0.0.0/16 10.0.1.0/24 10.0.2.0/24 10.0.3.0/24 us-eas
 aws cloudformation create-stack --stack-name csye6225demo2 --parameters file://vars.json --template-body file://networking.json --profile dev --region 'us-east-2'
 ```
 
+* Run this command to create application stack using amazon cli
+
+```sh
+aws cloudformation create-stack --stack-name csye6225demo2 --parameters file://vars.json --template-body file://application.json --profile dev --region 'us-east-2'
+```
+
 - Run the ` sh delete-stack.sh STACK_NAME PROFILE REGION_NAME` to delete networking resources using AWS CLI
     
 * Example to delete network infrastructure using cloudformation using shell script
