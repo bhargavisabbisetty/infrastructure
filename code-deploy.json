@@ -526,28 +526,26 @@
                 }],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Join": ["", [
-                            "#!/bin/sh\n",
-                            "cd /etc/profile.d\n",
-                            "sudo touch custom.sh\n",
-                            "sudo echo export MYSQL_HOST=", {
-                                "Fn::GetAtt": ["RDS", "Endpoint.Address"]
-                            }, " >> custom.sh\n",
-                            "sudo echo export MYSQL_USER=", {
-                                "Ref": "MasterUserName"
-                            }, " >> custom.sh\n",
-                            "sudo echo export MYSQL_PASSWORD=", {
-                                "Ref": "MasterUserPassword"
-                            }, " >> custom.sh\n",
-                            "sudo echo export S3_BUCKET_ADDR=", {
-                                "Ref": "S3Bucket"
-                            }, " >> custom.sh\n",
-                            "sudo echo export MYSQL_DATABASE=", {
-                                "Ref": "DatabaseName"
-                            }, " >> custom.sh\n"
-                        ]]
+                      "Fn::Join": ["", [
+                        "#!/bin/sh\n",
+                        "echo MYSQL_HOST=", {
+                          "Fn::GetAtt": ["RDS", "Endpoint.Address"]
+                        }, " >> /etc/environment\n",
+                        "echo MYSQL_USER=", {
+                          "Ref": "MasterUserName"
+                        }, " >> /etc/environment\n",
+                        "echo MYSQL_PASSWORD=", {
+                          "Ref": "MasterUserPassword"
+                        }, " >> /etc/environment\n",
+                        "echo S3_BUCKET_ADDR=", {
+                          "Ref": "S3Bucket"
+                        }, " >> /etc/environment\n",
+                        "echo MYSQL_DATABASE=", {
+                          "Ref": "DatabaseName"
+                        }, " >> /etc/environment\n"
+                      ]]
                     }
-                },
+                  },
                 "Tags": [{
                     "Key": "Name",
                     "Value": {
