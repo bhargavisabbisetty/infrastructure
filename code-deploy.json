@@ -302,6 +302,9 @@
                         "Ref": "StackName"
                     }]]
                 },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+                ],
                 "Tags": [{
                     "Key": "Name",
                     "Value": "CodeDeployEC2ServiceRole"
@@ -459,33 +462,33 @@
         "CodeDeployGroup": {
             "Type": "AWS::CodeDeploy::DeploymentGroup",
             "Properties": {
-              "ApplicationName": {
-                "Ref": "CodeDeployApplication"
-              },
-              "AutoRollbackConfiguration": {
-                "Enabled": true,
-                "Events": ["DEPLOYMENT_FAILURE"]
-              },
-              "DeploymentGroupName": "csye6225-webapp-deployment",
-              "DeploymentStyle": {
-                "DeploymentOption": "WITHOUT_TRAFFIC_CONTROL",
-                "DeploymentType": "IN_PLACE"
-              },
-              "Ec2TagFilters": [
-                {
-                  "Key": "aws:cloudformation:stack-name",
-                  "Type": "KEY_AND_VALUE",
-                  "Value": {"Fn::Sub": "${AWS::StackName}"}
+                "ApplicationName": {
+                    "Ref": "CodeDeployApplication"
+                },
+                "AutoRollbackConfiguration": {
+                    "Enabled": true,
+                    "Events": ["DEPLOYMENT_FAILURE"]
+                },
+                "DeploymentGroupName": "csye6225-webapp-deployment",
+                "DeploymentStyle": {
+                    "DeploymentOption": "WITHOUT_TRAFFIC_CONTROL",
+                    "DeploymentType": "IN_PLACE"
+                },
+                "Ec2TagFilters": [{
+                    "Key": "aws:cloudformation:stack-name",
+                    "Type": "KEY_AND_VALUE",
+                    "Value": {
+                        "Fn::Sub": "${AWS::StackName}"
+                    }
+                }],
+                "ServiceRoleArn": {
+                    "Fn::GetAtt": [
+                        "CodeDeployServiceRole",
+                        "Arn"
+                    ]
                 }
-              ],
-              "ServiceRoleArn": {
-                "Fn::GetAtt": [
-                  "CodeDeployServiceRole",
-                  "Arn"
-                ]
-              }
             }
-          },
+        },
         "EC2Instance": {
             "Type": "AWS::EC2::Instance",
             "DependsOn": "RDS",
@@ -526,26 +529,26 @@
                 }],
                 "UserData": {
                     "Fn::Base64": {
-                      "Fn::Join": ["", [
-                        "#!/bin/sh\n",
-                        "echo MYSQL_HOST=", {
-                          "Fn::GetAtt": ["RDS", "Endpoint.Address"]
-                        }, " >> /etc/environment\n",
-                        "echo MYSQL_USER=", {
-                          "Ref": "MasterUserName"
-                        }, " >> /etc/environment\n",
-                        "echo MYSQL_PASSWORD=", {
-                          "Ref": "MasterUserPassword"
-                        }, " >> /etc/environment\n",
-                        "echo S3_BUCKET_ADDR=", {
-                          "Ref": "S3Bucket"
-                        }, " >> /etc/environment\n",
-                        "echo MYSQL_DATABASE=", {
-                          "Ref": "DatabaseName"
-                        }, " >> /etc/environment\n"
-                      ]]
+                        "Fn::Join": ["", [
+                            "#!/bin/sh\n",
+                            "echo MYSQL_HOST=", {
+                                "Fn::GetAtt": ["RDS", "Endpoint.Address"]
+                            }, " >> /etc/environment\n",
+                            "echo MYSQL_USER=", {
+                                "Ref": "MasterUserName"
+                            }, " >> /etc/environment\n",
+                            "echo MYSQL_PASSWORD=", {
+                                "Ref": "MasterUserPassword"
+                            }, " >> /etc/environment\n",
+                            "echo S3_BUCKET_ADDR=", {
+                                "Ref": "S3Bucket"
+                            }, " >> /etc/environment\n",
+                            "echo MYSQL_DATABASE=", {
+                                "Ref": "DatabaseName"
+                            }, " >> /etc/environment\n"
+                        ]]
                     }
-                  },
+                },
                 "Tags": [{
                     "Key": "Name",
                     "Value": {
