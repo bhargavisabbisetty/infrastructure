@@ -724,10 +724,10 @@
                         "Ref": "StackName"
                     }, "-", "MyTargetGroup"]]
                 },
-                "HealthyThresholdCount": 5,
+                "HealthyThresholdCount": 3,
                 "Port": 3000,
                 "Protocol": "HTTP",
-                "UnhealthyThresholdCount": 2,
+                "UnhealthyThresholdCount": 5,
                 "TargetGroupAttributes": [{
                     "Key": "deregistration_delay.timeout_seconds",
                     "Value": 20
