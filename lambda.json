@@ -671,6 +671,9 @@
                             }, " >> /etc/environment\n",
                             "echo MYSQL_DATABASE=", {
                                 "Ref": "DatabaseName"
+                            }, " >> /etc/environment\n",
+                            "echo SQS_QUEUE_URL=", {
+                                "Ref": "SQSQueue"
                             }, " >> /etc/environment\n"
                         ]]
                     }
