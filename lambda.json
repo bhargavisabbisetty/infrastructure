@@ -396,10 +396,8 @@
                 "QueueName": {
                     "Fn::Join": ["", [{
                         "Ref": "StackName"
-                    }, "-", "SQSQueue.fifo"]]
-                },
-                "FifoQueue": true,
-                "ContentBasedDeduplication": true
+                    }, "-", "SQSQueue"]]
+                }
             },
             "Type": "AWS::SQS::Queue"
         },
