@@ -349,7 +349,7 @@
 
         "CodeDeployEC2ServiceRole": {
             "Type": "AWS::IAM::Role",
-            "DependsOn": "SNS",
+            "DependsOn": "SNSTopic",
             "Properties": {
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
