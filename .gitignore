@@ -15,6 +15,7 @@ create-stack1.sh
 vars-prod-us-east-2.json
 vars-prod-autoscaling.json
 vars-dev-autoscaling.json
+lambda1.json
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
