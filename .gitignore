@@ -14,8 +14,12 @@ networking_1.json
 create-stack1.sh
 vars-prod-us-east-2.json
 vars-prod-autoscaling.json
+vars-prod-autoscaling1.json
+vars-prod-autoscaling2.json
 vars-dev-autoscaling.json
 lambda1.json
+security1.json
+security2.json
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
