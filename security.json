@@ -607,7 +607,7 @@
                         "Ref": "StackName"
                     }]]
                 },
-                "CACertificateIdentifier": "rds-ca-2019",
+                
                 "MasterUsername": {
                     "Ref": "MasterUserName"
                 },
