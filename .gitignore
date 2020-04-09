@@ -17,6 +17,7 @@ vars-prod-autoscaling.json
 vars-prod-autoscaling1.json
 vars-prod-autoscaling2.json
 vars-dev-autoscaling.json
+import-certificate.json
 lambda1.json
 security1.json
 security2.json
