@@ -92,3 +92,21 @@ sh delete-stack.sh csye6225demo dev us-east-2
 ```sh
 aws cloudformation delete-stack --stack-name csye6225demo --profile dev --region us-east-2
 ```
+
+* Run this command to import certificate into AWS Certificate Manager
+
+```sh
+aws acm import-certificate --profile prof --certificate file://Certificate.pem --certificate-chain file://CertificateChain.pem --private-key file://PrivateKey.pem
+```
+
+<p align="center">or</p>
+
+```sh
+aws acm import-certificate --profile prof --certificate fileb://Certificate.pem --certificate-chain  fileb://CertificateChain.pem --private-key fileb://PrivateKey.pem
+```
+
+* Run this script to import certificate into AWS Certificate Manager directly by providing required parameters
+
+```sh
+sh insert-certificate.sh fileb://Certificate.pem fileb://CertificateChain.pem fileb://PrivateKey.pem prof
+```

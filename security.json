@@ -78,6 +78,14 @@
             "Type": "String",
             "Description": "Database Name"
         },
+        "PortNumber": {
+            "Type": "String",
+            "Description": "Port Number used for connecting to database"
+        },
+        "SSLType": {
+            "Type": "String",
+            "Description": "SSL Type"
+        },
         "KeyName": {
             "Type": "String",
             "Description": "Key value pair of AWS"
@@ -599,6 +607,7 @@
                         "Ref": "StackName"
                     }]]
                 },
+                "CACertificateIdentifier": "rds-ca-2019",
                 "MasterUsername": {
                     "Ref": "MasterUserName"
                 },
@@ -819,6 +828,12 @@
                             "echo MYSQL_DATABASE=", {
                                 "Ref": "DatabaseName"
                             }, " >> /etc/environment\n",
+                            "echo MYSQL_PORT=", {
+                                "Ref": "PortNumber"
+                            }, " >> /etc/environment\n",
+                            "echo SSL_TYPE=", {
+                                "Ref": "SSLType"
+                            }, " >> /etc/environment\n",
                             "echo SQS_QUEUE_URL=", {
                                 "Ref": "SQSQueue"
                             }, " >> /etc/environment\n",
@@ -973,7 +988,7 @@
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupName": "LoadBalancer_SG",
-                "GroupDescription": "enable HTTPS access 80 and ssh access 22",
+                "GroupDescription": "enable HTTPS access 443",
                 "VpcId": {
                     "Ref": "VPC"
                 },
@@ -1000,12 +1015,6 @@
                         "SourceSecurityGroupId": {
                             "Ref": "LoadBalancerSecurityGroup"
                         }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "22",
-                        "ToPort": "22",
-                        "CidrIp": "0.0.0.0/0"
                     }
                 ]
             }
